@@ -2,7 +2,8 @@ from gym import Env
 from gym.spaces import Discrete, Box
 import numpy as np
 import pongGame
-import pygame
+
+from pongGame import pg
 
 
 class PongEnv(Env):
@@ -41,15 +42,15 @@ class PongEnv(Env):
     def act(self, action):
         if action == 0:
             # move paddle down
-            pygame.event.post(pygame.event.Event(
-                pygame.KEYDOWN, {"key": self.paddle.down_key}))
+            pg.event.post(pg.event.Event(
+                pg.KEYDOWN, {"key": self.paddle.down_key}))
         if action == 1:
             # do not move paddle
             pass
         if action == 2:
             # move paddle up
-            pygame.event.post(pygame.event.Event(
-                pygame.KEYDOWN, {"key": self.paddle.up_key}))
+            pg.event.post(pg.event.Event(
+                pg.KEYDOWN, {"key": self.paddle.up_key}))
 
     def step(self, action):
         self.act(action)
@@ -61,7 +62,7 @@ class PongEnv(Env):
             reward -= 20
             self.score = self.paddle.losses
 
-        for event in pygame.event.get(eventtype=pongGame.BOUNCE):
+        for event in pg.event.get(eventtype=pongGame.BOUNCE):
             if self.side == event.side:
                 reward += 10
 
@@ -95,7 +96,7 @@ class PongEnv(Env):
 class PaddleAgent(pongGame.Paddle):
     def __init__(self, model, player):
         super(PaddleAgent, self).__init__(
-            player=player, keys=(pygame.K_w, pygame.K_s))
+            player=player, keys=(pg.K_w, pg.K_s))
         self.model = model
         self.game = None
         self.side = player

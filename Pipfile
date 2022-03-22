@@ -9,6 +9,8 @@ numpy = "*"
 gym = "*"
 stable-baselines3 = "*"
 autopep8 = "*"
+pyjs = {git = "https://github.com/pyjs/pyjs.git"}
+transcrypt = "*"
 
 [dev-packages]
 

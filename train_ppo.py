@@ -1,4 +1,3 @@
-from pygame import K_w, K_s
 from pongEnv import PaddleAgent, PongEnv
 from pongGame import Game, LEFT, RIGHT
 

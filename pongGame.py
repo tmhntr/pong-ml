@@ -1,9 +1,3 @@
-import os
-from threading import current_thread
-import pygame
-import random
-import pathlib
-
 from pygame.locals import (
     K_UP,
     K_DOWN,
@@ -13,21 +7,43 @@ from pygame.locals import (
     KEYDOWN,
     QUIT,
 )
+import os
+# from threading import current_thread
+import random
+# import pathlib
+
+platform = None
+# __pragma__ ('skip')
+if os.name in ('posix', 'nt', 'os2', 'ce', 'riscos'):
+    import pygame as pg
+    platform = 'pc'
+# elif os.name == 'java':
+#   import pyj2d as pg
+#   platform = 'jvm'
+else:
+    import pyjsdl as pg
+    platform = 'js'
+# __pragma__ ('noskip')
+if platform is None:
+    import pyjsdl as pg
+    from pyjsdl.pylib import os
+    platform = 'js'
+
 
 LEFT = 0
 RIGHT = 1
 TOP = 2
 BOTTOM = 3
 
-pygame.init()
-BOUNCE = pygame.event.custom_type()
+pg.init()
+BOUNCE = pg.event.custom_type()
 
 # Define constants for the screen width and height
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
 
-class Paddle(pygame.sprite.Sprite):
+class Paddle(pg.sprite.Sprite):
     width = 10
     height = 100
 
@@ -35,7 +51,7 @@ class Paddle(pygame.sprite.Sprite):
         super(Paddle, self).__init__()
         self.player = player
         self.yspeed = 5
-        self.surf = pygame.Surface((self.width, self.height))
+        self.surf = pg.Surface((self.width, self.height))
         self.surf.fill((0, 0, 0))
         x = self.width/2 if player == LEFT else SCREEN_WIDTH - self.width/2
         self.rect = self.surf.get_rect(
@@ -65,7 +81,7 @@ class Paddle(pygame.sprite.Sprite):
             self.rect.top = 0
 
 
-class Ball(pygame.sprite.Sprite):
+class Ball(pg.sprite.Sprite):
     width = 8
     height = 8
 
@@ -77,7 +93,7 @@ class Ball(pygame.sprite.Sprite):
         self.xspeed = random.choice(
             [-self.MAX_X_VELOCITY, self.MAX_X_VELOCITY])
         self.yspeed = random.randint(-5, 5)
-        self.surf = pygame.Surface((self.width, self.height))
+        self.surf = pg.Surface((self.width, self.height))
         self.surf.fill((0, 0, 255))
 
         self.rect = self.surf.get_rect(
@@ -95,11 +111,11 @@ class Ball(pygame.sprite.Sprite):
         if self.rect.bottom > SCREEN_HEIGHT:
             self.rect.bottom = SCREEN_HEIGHT
             self.yspeed = -self.yspeed
-            pygame.event.post(pygame.event.Event(BOUNCE, {"side": BOTTOM}))
+            pg.event.post(pg.event.Event(BOUNCE, {"side": BOTTOM}))
         if self.rect.top < 0:
             self.rect.top = 0
             self.yspeed = -self.yspeed
-            pygame.event.post(pygame.event.Event(BOUNCE, {"side": TOP}))
+            pg.event.post(pg.event.Event(BOUNCE, {"side": TOP}))
         self.rect.move_ip(self.xspeed, self.yspeed)
 
 
@@ -109,19 +125,19 @@ class Game():
         self.left = left_paddle
         self.right = right_paddle
         self.ball = Ball()
-        self.all_sprites = pygame.sprite.Group(
+        self.all_sprites = pg.sprite.Group(
             [self.left, self.right, self.ball])
-        self.paddles = pygame.sprite.Group([self.left, self.right])
+        self.paddles = pg.sprite.Group([self.left, self.right])
 
-        self.clock = pygame.time.Clock()
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.clock = pg.time.Clock()
+        self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
         # Initialize score text
-        pygame.display.set_caption('Pong')
-        self.font = pygame.font.Font('assets/OpenSans.ttf', 32)
+        pg.display.set_caption('Pong')
+        self.font = pg.font.Font('assets/OpenSans.ttf', 32)
 
-        self.ball_sound = pygame.mixer.Sound("assets/tennis-ball-bounce.mp3")
-        self.paddle_sound = pygame.mixer.Sound("assets/tennis-ball-bounce.mp3")
+        self.ball_sound = pg.mixer.Sound("assets/tennis-ball-bounce.mp3")
+        self.paddle_sound = pg.mixer.Sound("assets/tennis-ball-bounce.mp3")
 
         self.DISPLAY_SCORE = True
         self.PLAY_SOUND = True
@@ -142,7 +158,7 @@ class Game():
                 rscore, (SCREEN_WIDTH * 3 // 4, SCREEN_HEIGHT // 6))
 
         if self.PLAY_SOUND:
-            if pygame.event.peek(BOUNCE):
+            if pg.event.peek(BOUNCE):
                 self.paddle_sound.play(maxtime=1000)
 
         # blit all sprites
@@ -150,7 +166,7 @@ class Game():
             self.screen.blit(entity.surf, entity.rect)
 
         # Flip the display
-        pygame.display.flip()
+        pg.display.flip()
         self.clock.tick(60)
 
     def reset(self):
@@ -159,13 +175,13 @@ class Game():
         self.right.wins = 0
         self.right.losses = 0
 
-        self.clock = pygame.time.Clock()
+        self.clock = pg.time.Clock()
         self.ball.kill()
         self.ball = Ball()
         self.all_sprites.add(self.ball)
 
     def step(self):
-        current_events = pygame.event.get()
+        current_events = pg.event.get()
         for event in current_events:
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
@@ -176,21 +192,21 @@ class Game():
         # move paddles
         for entity in self.paddles:
             for key in [entity.up_key, entity.down_key]:
-                if pygame.key.get_pressed()[key]:
+                if pg.key.get_pressed()[key]:
                     entity.update(key)
                 elif any(map(lambda event: event.type == KEYDOWN and event.key == key, current_events)):
                     entity.update(key)
                 else:
                     entity.update()
 
-        ball_collision = pygame.sprite.spritecollideany(
+        ball_collision = pg.sprite.spritecollideany(
             self.ball, self.paddles)
         if ball_collision == self.left:
             self.ball.bounce(LEFT)
-            pygame.event.post(pygame.event.Event(BOUNCE, {"side": LEFT}))
+            pg.event.post(pg.event.Event(BOUNCE, {"side": LEFT}))
         elif ball_collision == self.right:
             self.ball.bounce(RIGHT)
-            pygame.event.post(pygame.event.Event(BOUNCE, {"side": RIGHT}))
+            pg.event.post(pg.event.Event(BOUNCE, {"side": RIGHT}))
 
         self.ball.update()
 
@@ -207,6 +223,10 @@ class Game():
             self.left.wins += 1
             self.right.losses += 1
 
+    def run(self):
+        self.step()
+        self.render()
+
     def play(self):
         self.running = True
         while self.running:
@@ -215,9 +235,21 @@ class Game():
 
             self.render()
 
-        pygame.quit()
+        pg.quit()
 
 
-if __name__ == "__main__":
+def main():
     game = Game()
     game.play()
+
+
+def main_js():
+    game = Game()
+    pg.setup(game)
+
+
+if __name__ == '__main__':
+    if platform in ('pc', 'jvm'):
+        main()
+    elif platform == 'js':
+        main_js()
