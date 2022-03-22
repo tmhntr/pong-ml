@@ -1,6 +1,8 @@
+import os
 from threading import current_thread
 import pygame
 import random
+import pathlib
 
 from pygame.locals import (
     K_UP,
@@ -14,7 +16,10 @@ from pygame.locals import (
 
 LEFT = 0
 RIGHT = 1
+TOP = 2
+BOTTOM = 3
 
+pygame.init()
 BOUNCE = pygame.event.custom_type()
 
 # Define constants for the screen width and height
@@ -90,9 +95,11 @@ class Ball(pygame.sprite.Sprite):
         if self.rect.bottom > SCREEN_HEIGHT:
             self.rect.bottom = SCREEN_HEIGHT
             self.yspeed = -self.yspeed
+            pygame.event.post(pygame.event.Event(BOUNCE, {"side": BOTTOM}))
         if self.rect.top < 0:
             self.rect.top = 0
             self.yspeed = -self.yspeed
+            pygame.event.post(pygame.event.Event(BOUNCE, {"side": TOP}))
         self.rect.move_ip(self.xspeed, self.yspeed)
 
 
@@ -109,11 +116,34 @@ class Game():
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
+        # Initialize score text
+        pygame.display.set_caption('Pong')
+        self.font = pygame.font.Font('assets/OpenSans.ttf', 32)
+
+        self.ball_sound = pygame.mixer.Sound("assets/tennis-ball-bounce.mp3")
+        self.paddle_sound = pygame.mixer.Sound("assets/tennis-ball-bounce.mp3")
+
         self.DISPLAY_SCORE = True
+        self.PLAY_SOUND = True
 
     def render(self):
         # Fill the background with white
         self.screen.fill((255, 255, 255))
+
+        if self.DISPLAY_SCORE:
+            # render scores
+            lscore = self.font.render(
+                str(self.left.wins), True, (0, 0, 0), (255, 255, 255))
+            rscore = self.font.render(
+                str(self.right.wins), True, (0, 0, 0), (255, 255, 255))
+            self.screen.blit(
+                lscore, (SCREEN_WIDTH * 1 // 4, SCREEN_HEIGHT // 6))
+            self.screen.blit(
+                rscore, (SCREEN_WIDTH * 3 // 4, SCREEN_HEIGHT // 6))
+
+        if self.PLAY_SOUND:
+            if pygame.event.peek(BOUNCE):
+                self.paddle_sound.play(maxtime=1000)
 
         # blit all sprites
         for entity in self.all_sprites:
@@ -170,16 +200,12 @@ class Game():
             self.all_sprites.add(self.ball)
             self.right.wins += 1
             self.left.losses += 1
-            if self.DISPLAY_SCORE:
-                print(f"Left: {self.left.wins}\tRight: {self.right.wins}")
         if self.ball.rect.left > SCREEN_WIDTH:
             self.ball.kill()
             self.ball = Ball()
             self.all_sprites.add(self.ball)
             self.left.wins += 1
             self.right.losses += 1
-            if self.DISPLAY_SCORE:
-                print(f"Left: {self.left.wins}\tRight: {self.right.wins}")
 
     def play(self):
         self.running = True
