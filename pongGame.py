@@ -78,8 +78,11 @@ class Ball(pygame.sprite.Sprite):
         self.rect = self.surf.get_rect(
             center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
 
-    def bounce(self):
-        self.xspeed = -self.xspeed
+    def bounce(self, side):
+        if side == RIGHT:
+            self.xspeed = -abs(self.xspeed)
+        if side == LEFT:
+            self.xspeed = abs(self.xspeed)
         self.yspeed = random.randint(
             max(-self.MAX_Y_VELOCITY, self.yspeed - 4), min(self.MAX_Y_VELOCITY, self.yspeed + 4))
 
@@ -153,10 +156,10 @@ class Game():
         ball_collision = pygame.sprite.spritecollideany(
             self.ball, self.paddles)
         if ball_collision == self.left:
-            self.ball.bounce()
+            self.ball.bounce(LEFT)
             pygame.event.post(pygame.event.Event(BOUNCE, {"side": LEFT}))
         elif ball_collision == self.right:
-            self.ball.bounce()
+            self.ball.bounce(RIGHT)
             pygame.event.post(pygame.event.Event(BOUNCE, {"side": RIGHT}))
 
         self.ball.update()

@@ -30,6 +30,14 @@ class PongEnv(Env):
 
         self.step_number = 0
 
+    def _observe(self):
+        if self.side == pongGame.LEFT:
+            return np.array([self.game.ball.rect.centerx, self.game.ball.rect.centery,
+                             self.game.ball.xspeed, self.game.ball.yspeed, self.paddle.rect.centery])
+        else:
+            return np.array([pongGame.SCREEN_WIDTH-self.game.ball.rect.centerx, self.game.ball.rect.centery,
+                             -self.game.ball.xspeed, self.game.ball.yspeed, self.paddle.rect.centery])
+
     def act(self, action):
         if action == 0:
             # move paddle down
@@ -43,12 +51,10 @@ class PongEnv(Env):
             pygame.event.post(pygame.event.Event(
                 pygame.KEYDOWN, {"key": self.paddle.up_key}))
 
-        observation = np.array([self.game.ball.rect.centerx, self.game.ball.rect.centery,
-                               self.game.ball.xspeed, self.game.ball.yspeed, self.paddle.rect.centery])
-        return observation
-
     def step(self, action):
-        observation = self.act(action)
+        self.act(action)
+
+        observation = self._observe()
 
         reward = 0
         if self.score < self.paddle.losses:
@@ -74,9 +80,7 @@ class PongEnv(Env):
         self.score = 0
         self.step_number = 0
 
-        observation = np.array([self.game.ball.rect.centerx, self.game.ball.rect.centery,
-                               self.game.ball.xspeed, self.game.ball.yspeed, self.paddle.rect.centery])
-        return observation
+        return self._observe()
 
     def render(self):
         self.game.render()
@@ -94,12 +98,16 @@ class PaddleAgent(pongGame.Paddle):
             player=player, keys=(pygame.K_w, pygame.K_s))
         self.model = model
         self.game = None
+        self.side = player
 
     def _observe(self):
         if not self.game:
             raise ValueError("Game must be set")
         else:
-            return np.array([self.game.ball.rect.centerx, self.game.ball.rect.centery, self.game.ball.xspeed, self.game.ball.yspeed, self.rect.centery])
+            if self.side == pongGame.LEFT:
+                return np.array([self.game.ball.rect.centerx, self.game.ball.rect.centery, self.game.ball.xspeed, self.game.ball.yspeed, self.rect.centery])
+            elif self.side == pongGame.RIGHT:
+                return np.array([pongGame.SCREEN_WIDTH-self.game.ball.rect.centerx, self.game.ball.rect.centery, -self.game.ball.xspeed, self.game.ball.yspeed, self.rect.centery])
 
     def set_game(self, game: pongGame.Game):
         self.game = game
