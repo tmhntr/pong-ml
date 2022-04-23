@@ -11,6 +11,6 @@ What I learned through this project:
 
 Road map:
 
-- [] Add in score display
+- [x] Add in score display
 - [] Create webpage with github pages and pyjs (or alternative)
 - [] Implement agents with other ml frameworks
