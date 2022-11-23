@@ -6,7 +6,7 @@ Repo includes agents that have been trained using the openAI gym framework with 
 
 ## Reflection:
 What I learned through this project:
-- Use of machine learning algorithms and frameworks for a self-directed project.
+- Use of reinforcement learning algorithms and frameworks for a self-directed project.
 - Implementing a game using pygame.
 
 Road map:
